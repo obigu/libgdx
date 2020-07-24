@@ -35,7 +35,6 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.ChainShape;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactFilter;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
@@ -46,9 +45,6 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
 import com.badlogic.gdx.physics.box2d.QueryCallback;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.physics.box2d.WorldManifold;
-import com.badlogic.gdx.physics.box2d.joints.MouseJoint;
-import com.badlogic.gdx.physics.box2d.joints.MouseJointDef;
 import com.badlogic.gdx.tests.utils.GdxTest;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.TimeUtils;
@@ -82,7 +78,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 	Body groundBody;
 
 	/** our mouse joint **/
-	private MouseJoint mouseJoint = null;
+//	private MouseJoint mouseJoint = null;
 
 	/** a hit body **/
 	Body hitBody = null;
@@ -90,6 +86,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 	private final static boolean USE_CONTACT_FILTER = true;
 	private final static float BOX_SIZE = 2f;
 	private float box2DStepAccumulator;
+	private int amountOfBoxes = 100;
 
 	private enum ObjectType {
 		WALL, BOX;
@@ -248,7 +245,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// next we create the 50 box bodies using the PolygonShape we just
 		// defined. This process is similar to the one we used for the ground
 		// body. Note that we reuse the polygon for each body fixture.
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < amountOfBoxes; i++) {
 			// Create the BodyDef, set a random position above the
 			// ground and create a new body
 			BodyDef boxBodyDef = new BodyDef();
@@ -351,7 +348,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// we work in pixel coordinates
 		batch.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		batch.begin();
-		font.draw(batch, "fps: " + Gdx.graphics.getFramesPerSecond() + " update time: " + updateTime, 100, 20);
+		font.draw(batch, "fps: " + Gdx.graphics.getFramesPerSecond() + ", boxes: " + amountOfBoxes + ", update time: " + updateTime, 100, 20);
 		batch.end();
 	}
 
@@ -399,29 +396,30 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		testPoint.set(x, y, 0);
 		camera.unproject(testPoint);
 
-		// ask the world which bodies are within the given
-		// bounding box around the mouse pointer
-		hitBody = null;
-		world.QueryAABB(callback, testPoint.x - 0.1f, testPoint.y - 0.1f, testPoint.x + 0.1f, testPoint.y + 0.1f);
-
-		// if we hit something we create a new mouse joint
-		// and attach it to the hit body.
-		if (hitBody != null) {
-			MouseJointDef def = new MouseJointDef();
-			def.bodyA = groundBody;
-			def.bodyB = hitBody;
-			def.collideConnected = true;
-			def.target.set(testPoint.x, testPoint.y);
-			def.maxForce = 1000.0f * hitBody.getMass();
-
-			mouseJoint = (MouseJoint)world.createJoint(def);
-			hitBody.setAwake(true);
-		} else {
+//		// ask the world which bodies are within the given
+//		// bounding box around the mouse pointer
+//		hitBody = null;
+//		world.QueryAABB(callback, testPoint.x - 0.1f, testPoint.y - 0.1f, testPoint.x + 0.1f, testPoint.y + 0.1f);
+//
+//		// if we hit something we create a new mouse joint
+//		// and attach it to the hit body.
+//		if (hitBody != null) {
+//			MouseJointDef def = new MouseJointDef();
+//			def.bodyA = groundBody;
+//			def.bodyB = hitBody;
+//			def.collideConnected = true;
+//			def.target.set(testPoint.x, testPoint.y);
+//			def.maxForce = 1000.0f * hitBody.getMass();
+//
+//			mouseJoint = (MouseJoint)world.createJoint(def);
+//			hitBody.setAwake(true);
+//		} else {
 			for (Body box : boxes)
 				world.destroyBody(box);
 			boxes.clear();
+			amountOfBoxes += 100;
 			createBoxes();
-		}
+//		}
 
 		return false;
 	}
@@ -434,20 +432,20 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// if a mouse joint exists we simply update
 		// the target of the joint based on the new
 		// mouse coordinates
-		if (mouseJoint != null) {
-			camera.unproject(testPoint.set(x, y, 0));
-			mouseJoint.setTarget(target.set(testPoint.x, testPoint.y));
-		}
+//		if (mouseJoint != null) {
+//			camera.unproject(testPoint.set(x, y, 0));
+//			mouseJoint.setTarget(target.set(testPoint.x, testPoint.y));
+//		}
 		return false;
 	}
 
 	@Override
 	public boolean touchUp (int x, int y, int pointer, int button) {
 		// if a mouse joint exists we simply destroy it
-		if (mouseJoint != null) {
-			world.destroyJoint(mouseJoint);
-			mouseJoint = null;
-		}
+//		if (mouseJoint != null) {
+//			world.destroyJoint(mouseJoint);
+//			mouseJoint = null;
+//		}
 		return false;
 	}
 
