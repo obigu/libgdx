@@ -37,6 +37,7 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.ChainShape;
 import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactFilter;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Fixture;
@@ -55,6 +56,8 @@ import com.badlogic.gdx.utils.TimeUtils;
 import java.util.ArrayList;
 
 public class Box2DTest extends GdxTest implements InputProcessor {
+	private static final float TIME_STEP = 1 / 60f;
+
 	/** the camera **/
 	private com.badlogic.gdx.graphics.OrthographicCamera camera;
 
@@ -83,6 +86,14 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 
 	/** a hit body **/
 	Body hitBody = null;
+
+	private final static boolean USE_CONTACT_FILTER = true;
+	private final static float BOX_SIZE = 2f;
+	private float box2DStepAccumulator;
+
+	private enum ObjectType {
+		WALL, BOX;
+	}
 
 	@Override
 	public void create () {
@@ -119,6 +130,18 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// we instantiate a new World with a proper gravity vector
 		// and tell it to sleep when possible.
 		world = new World(new Vector2(0, -10), true);
+		if (USE_CONTACT_FILTER) {
+			world.setContactFilter(new ContactFilter() {
+				@Override
+				public boolean shouldCollide (Fixture fixtureA, Fixture fixtureB) {
+					if (fixtureA.getBody().getUserData() == fixtureB.getBody().getUserData()) {
+						return false;
+					} else {
+						return true;
+					}
+				}
+			});
+		}
 
 		float[] vertices = {-0.07421887f, -0.16276085f, -0.12109375f, -0.22786504f, -0.157552f, -0.7122401f, 0.04296875f,
 			-0.7122401f, 0.110677004f, -0.6419276f, 0.13151026f, -0.49869835f, 0.08984375f, -0.3190109f};
@@ -140,7 +163,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		BodyDef groundBodyDef = new BodyDef();
 		groundBodyDef.type = BodyType.StaticBody;
 		groundBody = world.createBody(groundBodyDef);
-
+		groundBody.setUserData(ObjectType.WALL);
 		// finally we add a fixture to the body using the polygon
 		// defined above. Note that we have to dispose PolygonShapes
 		// and CircleShapes once they are no longer used. This is the
@@ -151,15 +174,7 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		groundBody.createFixture(fixtureDef);
 		groundPoly.dispose();
 
-		// We also create a simple ChainShape we put above our
-		// ground polygon for extra funkyness.
-		ChainShape chainShape = new ChainShape();
-		chainShape.createLoop(new Vector2[] {new Vector2(-10, 10), new Vector2(-10, 5), new Vector2(10, 5), new Vector2(10, 11),});
-		BodyDef chainBodyDef = new BodyDef();
-		chainBodyDef.type = BodyType.StaticBody;
-		Body chainBody = world.createBody(chainBodyDef);
-		chainBody.createFixture(chainShape, 0);
-		chainShape.dispose();
+		createWalls();
 
 		createBoxes();
 
@@ -201,27 +216,55 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		});
 	}
 
+	private void createWalls () {
+		createWall(0, 32, 100, 2);
+		createWall(-24, 16, 2, 100);
+		createWall(24, 16, 2, 100);
+	}
+
+	private void createWall(float x, float y, float width, float heigh) {
+		PolygonShape shape = new PolygonShape();
+		shape.setAsBox(width / 2f, heigh / 2f);
+		BodyDef bodyDef = new BodyDef();
+		bodyDef.position.x = x;
+		bodyDef.position.y = y;
+		bodyDef.type = BodyType.StaticBody;
+		Body body = world.createBody(bodyDef);
+		body.setUserData(ObjectType.WALL);
+		FixtureDef fixtureDef = new FixtureDef();
+		fixtureDef.shape = shape;
+		fixtureDef.filter.groupIndex = 0;
+		body.createFixture(fixtureDef);
+		shape.dispose();
+	}
+
 	private void createBoxes () {
 		// next we create 50 boxes at random locations above the ground
 		// body. First we create a nice polygon representing a box 2 meters
 		// wide and high.
 		PolygonShape boxPoly = new PolygonShape();
-		boxPoly.setAsBox(1, 1);
+		boxPoly.setAsBox(BOX_SIZE / 2f, BOX_SIZE / 2f);
 
 		// next we create the 50 box bodies using the PolygonShape we just
 		// defined. This process is similar to the one we used for the ground
 		// body. Note that we reuse the polygon for each body fixture.
-		for (int i = 0; i < 20; i++) {
+		for (int i = 0; i < 1000; i++) {
 			// Create the BodyDef, set a random position above the
 			// ground and create a new body
 			BodyDef boxBodyDef = new BodyDef();
 			boxBodyDef.type = BodyType.DynamicBody;
 			boxBodyDef.position.x = -24 + (float)(Math.random() * 48);
-			boxBodyDef.position.y = 10 + (float)(Math.random() * 100);
+			boxBodyDef.position.y = (float)(Math.random() * 30);
 			Body boxBody = world.createBody(boxBodyDef);
-
-			boxBody.createFixture(boxPoly, 1);
-
+			boxBody.setUserData(ObjectType.BOX);
+			FixtureDef fixtureDef = new FixtureDef();
+			fixtureDef.shape = boxPoly;
+			fixtureDef.restitution = 1;
+			fixtureDef.filter.groupIndex = -1;
+			boxBody.createFixture(fixtureDef);
+			Vector2 linearVelocity = new Vector2(1f, 0);
+			linearVelocity.setAngle(MathUtils.random(0, 360f));
+			boxBody.setLinearVelocity(linearVelocity);
 			// add the box to our list of boxes
 			boxes.add(boxBody);
 		}
@@ -232,18 +275,27 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 
 	@Override
 	public void render () {
+
 		// first we update the world. For simplicity
 		// we use the delta time provided by the Graphics
 		// instance. Normally you'll want to fix the time
 		// step.
 		long start = TimeUtils.nanoTime();
-		world.step(Gdx.graphics.getDeltaTime(), 8, 3);
+
+		box2DStepAccumulator += Gdx.graphics.getDeltaTime();
+		// The null pointer protection is just in case screen has been disposed and this is called one last time
+		while (box2DStepAccumulator >= TIME_STEP && world != null) {
+			world.step(TIME_STEP, 8, 3);
+			box2DStepAccumulator -= TIME_STEP;
+		}
+
 		float updateTime = (TimeUtils.nanoTime() - start) / 1000000000.0f;
 
 		// next we clear the color buffer and set the camera
 		// matrices
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		camera.update();
+
 
 		// next we render the ground body
 		renderBox(groundBody, 50, 1);
@@ -258,9 +310,9 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 			Body box = boxes.get(i);
 			Vector2 position = box.getPosition(); // that's the box's center position
 			float angle = MathUtils.radiansToDegrees * box.getAngle(); // the rotation angle around the center
-			batch.draw(textureRegion, position.x - 1, position.y - 1, // the bottom left corner of the box, unrotated
-				1f, 1f, // the rotation center relative to the bottom left corner of the box
-				2, 2, // the width and height of the box
+			batch.draw(textureRegion, position.x - BOX_SIZE / 2f, position.y - BOX_SIZE / 2f, // the bottom left corner of the box, unrotated
+				BOX_SIZE / 2f, BOX_SIZE / 2f, // the rotation center relative to the bottom left corner of the box
+				BOX_SIZE, BOX_SIZE, // the width and height of the box
 				1, 1, // the scale on the x- and y-axis
 				angle); // the rotation angle
 		}
@@ -271,35 +323,35 @@ public class Box2DTest extends GdxTest implements InputProcessor {
 		// the renderer. the camera.apply() call is actually
 		// not needed as the opengl matrices are already set
 		// by the spritebatch which in turn uses the camera matrices :)
-		debugRenderer.render(world, camera.combined);
+//		debugRenderer.render(world, camera.combined);
 
 		// finally we render all contact points
-		renderer.setProjectionMatrix(camera.combined);
-		renderer.begin(ShapeType.Point);
-		renderer.setColor(0, 1, 0, 1);
-		for (int i = 0; i < world.getContactCount(); i++) {
-			Contact contact = world.getContactList().get(i);
-			// we only render the contact if it actually touches
-			if (contact.isTouching()) {
-				// get the world manifold from which we get the
-				// contact points. A manifold can have 0, 1 or 2
-				// contact points.
-				WorldManifold manifold = contact.getWorldManifold();
-				int numContactPoints = manifold.getNumberOfContactPoints();
-				for (int j = 0; j < numContactPoints; j++) {
-					Vector2 point = manifold.getPoints()[j];
-					renderer.point(point.x, point.y, 0);
-				}
-			}
-		}
-		renderer.end();
+//		renderer.setProjectionMatrix(camera.combined);
+//		renderer.begin(ShapeType.Point);
+//		renderer.setColor(0, 1, 0, 1);
+//		for (int i = 0; i < world.getContactCount(); i++) {
+//			Contact contact = world.getContactList().get(i);
+//			// we only render the contact if it actually touches
+//			if (contact.isTouching()) {
+//				// get the world manifold from which we get the
+//				// contact points. A manifold can have 0, 1 or 2
+//				// contact points.
+//				WorldManifold manifold = contact.getWorldManifold();
+//				int numContactPoints = manifold.getNumberOfContactPoints();
+//				for (int j = 0; j < numContactPoints; j++) {
+//					Vector2 point = manifold.getPoints()[j];
+//					renderer.point(point.x, point.y, 0);
+//				}
+//			}
+//		}
+//		renderer.end();
 
 		// finally we render the time it took to update the world
 		// for this we have to set the projection matrix again, so
 		// we work in pixel coordinates
 		batch.getProjectionMatrix().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		batch.begin();
-		font.draw(batch, "fps: " + Gdx.graphics.getFramesPerSecond() + " update time: " + updateTime, 0, 20);
+		font.draw(batch, "fps: " + Gdx.graphics.getFramesPerSecond() + " update time: " + updateTime, 100, 20);
 		batch.end();
 	}
 
