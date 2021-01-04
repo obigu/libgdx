@@ -89,6 +89,7 @@ public class IOSGraphics extends AbstractGraphics {
 	EAGLContext context;
 	GLVersion glVersion;
 	GLKView view;
+	IOSViewDelegate viewDelegate;
 	IOSUIViewController viewController;
 
 	public IOSGraphics (IOSApplication app, IOSApplicationConfiguration config, IOSInput input, boolean useGLES30) {
@@ -110,7 +111,7 @@ public class IOSGraphics extends AbstractGraphics {
 			gl30 = null;
 		}
 
-		IOSViewDelegate viewDelegate = new IOSViewDelegate();
+		viewDelegate = new IOSViewDelegate();
 		view = new GLKView(new CGRect(0, 0, screenBounds.width, screenBounds.height), context) {
 			@Method(selector = "touchesBegan:withEvent:")
 			public void touchesBegan (@Pointer long touches, UIEvent event) {
@@ -144,11 +145,6 @@ public class IOSGraphics extends AbstractGraphics {
 		view.setDrawableStencilFormat(config.stencilFormat);
 		view.setDrawableMultisample(config.multisample);
 		view.setMultipleTouchEnabled(true);
-
-		viewController = app.createUIViewController(this);
-		viewController.setView(view);
-		viewController.setDelegate(viewDelegate);
-		viewController.setPreferredFramesPerSecond(config.preferredFramesPerSecond);
 
 		this.app = app;
 		this.input = input;
@@ -193,6 +189,13 @@ public class IOSGraphics extends AbstractGraphics {
 		framesStart = lastFrameTime;
 
 		appPaused = false;
+	}
+	
+	public void setViewController (IOSUIViewController viewController) {
+		this.viewController = viewController;
+		viewController.setView(view);
+		viewController.setDelegate(viewDelegate);
+		viewController.setPreferredFramesPerSecond(config.preferredFramesPerSecond);
 	}
 
 	public void resume () {

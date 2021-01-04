@@ -14,10 +14,11 @@ import org.robovm.rt.bro.annotation.Callback;
 public class IOSUIViewController extends GLKViewController {
 	final IOSApplication app;
 	final IOSGraphics graphics;
+	IOSViewControllerListener viewControllerListener;
 
-	protected IOSUIViewController (IOSApplication app, IOSGraphics graphics) {
+	protected IOSUIViewController (IOSApplication app) {
 		this.app = app;
-		this.graphics = graphics;
+		this.graphics = app.graphics;
 	}
 
 	@Override
@@ -31,17 +32,17 @@ public class IOSUIViewController extends GLKViewController {
 	@Override
 	public void viewDidAppear (boolean animated) {
 		super.viewDidAppear(animated);
-		if (app.viewControllerListener != null) app.viewControllerListener.viewDidAppear(animated);
+		if (viewControllerListener != null) viewControllerListener.viewDidAppear(animated);
 	}
 
 	@Override
 	public UIInterfaceOrientationMask getSupportedInterfaceOrientations () {
 		long mask = 0;
 		if (app.config.orientationLandscape) {
-			mask |= ((1 << UIInterfaceOrientation.LandscapeLeft.value()) | (1 << UIInterfaceOrientation.LandscapeRight.value()));
+			mask |= ((1L << UIInterfaceOrientation.LandscapeLeft.value()) | (1L << UIInterfaceOrientation.LandscapeRight.value()));
 		}
 		if (app.config.orientationPortrait) {
-			mask |= ((1 << UIInterfaceOrientation.Portrait.value()) | (1 << UIInterfaceOrientation.PortraitUpsideDown.value()));
+			mask |= ((1L << UIInterfaceOrientation.Portrait.value()) | (1L << UIInterfaceOrientation.PortraitUpsideDown.value()));
 		}
 		return new UIInterfaceOrientationMask(mask);
 	}

@@ -31,7 +31,6 @@ import org.robovm.apple.uikit.UIApplicationDelegateAdapter;
 import org.robovm.apple.uikit.UIApplicationLaunchOptions;
 import org.robovm.apple.uikit.UIDevice;
 import org.robovm.apple.uikit.UIUserInterfaceIdiom;
-import org.robovm.apple.uikit.UIInterfaceOrientation;
 import org.robovm.apple.uikit.UIPasteboard;
 import org.robovm.apple.uikit.UIScreen;
 import org.robovm.apple.uikit.UIViewController;
@@ -91,7 +90,6 @@ public class IOSApplication implements Application {
 	UIApplication uiApp;
 	UIWindow uiWindow;
 	ApplicationListener listener;
-	IOSViewControllerListener viewControllerListener;
 	IOSApplicationConfiguration config;
 	IOSGraphics graphics;
 	IOSAudio audio;
@@ -150,8 +148,9 @@ public class IOSApplication implements Application {
 		Gdx.net = this.net;
 
 		this.input.setupPeripherals();
-
-		this.uiWindow.setRootViewController(this.graphics.viewController);
+		IOSUIViewController uiViewController = createUIViewController();
+		this.graphics.setViewController(uiViewController);
+		this.uiWindow.setRootViewController(uiViewController);
 		Gdx.app.debug("IOSApplication", "created");
 		return true;
 	}
@@ -164,8 +163,8 @@ public class IOSApplication implements Application {
 		 return new IOSGraphics(this, config, input, config.useGL30);
 	}
 
-	protected IOSUIViewController createUIViewController (IOSGraphics graphics) {
-		return new IOSUIViewController(this, graphics);
+	protected IOSUIViewController createUIViewController () {
+		return new IOSUIViewController(this);
 	}
 
 	protected IOSInput createInput() {
@@ -465,9 +464,9 @@ public class IOSApplication implements Application {
 		}
 	}
 
-	/** Add a listener to handle events from the libgdx root view controller
-	 * @param listener The {#link IOSViewControllerListener} to add */
-	public void addViewControllerListener (IOSViewControllerListener listener) {
-		viewControllerListener = listener;
+	/** Sets a listener to handle events from the libgdx root view controller
+	 * @param listener The {#link IOSViewControllerListener} to set */
+	public void setViewControllerListener (IOSViewControllerListener listener) {
+		graphics.viewController.viewControllerListener = listener;
 	}
 }
