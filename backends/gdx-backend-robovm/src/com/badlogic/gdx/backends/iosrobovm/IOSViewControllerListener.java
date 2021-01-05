@@ -16,7 +16,7 @@
 
 package com.badlogic.gdx.backends.iosrobovm;
 
-/** An IOSViewControllerListener can be added to an {@link IOSApplication} via
+/** An IOSViewControllerListener can be set to an {@link IOSApplication} via
  * {@link IOSApplication#setViewControllerListener(IOSViewControllerListener)}. It will receive notification of view events.</p>
  * 
  * The methods will be invoked on the UI thread.
@@ -25,6 +25,6 @@ package com.badlogic.gdx.backends.iosrobovm;
 public interface IOSViewControllerListener {
 
 	/** Called when the {@link IOSApplication} root ViewController has appeared */
-	public void viewDidAppear (boolean animated);
+	void viewDidAppear (boolean animated);
 
 }
