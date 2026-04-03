@@ -1,0 +1,30 @@
+def repoName = 'nexus'
+def repoUrl = 'http://192.168.1.40:8081/nexus/content/repositories/thirdparty/'
+allprojects {
+	pluginManager.withPlugin( 'maven-publish' ) {
+		publishing {
+			repositories {
+				maven {
+					name = repoName
+					url = repoUrl
+					credentials {
+						username = nexusUsername
+						password = nexusPassword
+					}
+					allowInsecureProtocol true
+				}
+			}
+		}
+		tasks.withType( PublishToMavenRepository ) {
+			onlyIf {
+				repository.name == repoName
+			}
+		}
+	}
+
+	gradle.taskGraph.whenReady {
+		tasks.withType(Sign) {
+			onlyIf { false }
+		}
+	}
+}
