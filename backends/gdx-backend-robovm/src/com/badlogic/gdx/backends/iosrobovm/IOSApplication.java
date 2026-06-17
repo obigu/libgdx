@@ -17,9 +17,11 @@
 package com.badlogic.gdx.backends.iosrobovm;
 
 import java.io.File;
+import java.lang.reflect.Modifier;
 
 import com.badlogic.gdx.ApplicationLogger;
 import com.badlogic.gdx.backends.iosrobovm.objectal.OALIOSAudio;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 import org.robovm.apple.coregraphics.CGRect;
 import org.robovm.apple.foundation.NSMutableDictionary;
 import org.robovm.apple.foundation.NSObject;
@@ -45,8 +47,23 @@ public class IOSApplication implements Application {
 
 	public static abstract class Delegate extends UIApplicationDelegateAdapter {
 		private IOSApplication app;
+		private IOSSceneDelegate sceneDelegateInstance;
 
 		protected abstract IOSApplication createApplication ();
+
+		protected void setSceneDelegateInstance (IOSSceneDelegate instance) {
+			if (instance != null) {
+				Class<?> clazz = instance.getClass();
+
+				// Check if it's inner class and NOT marked static
+				if (clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers())) {
+					throw new GdxRuntimeException("Your custom UISceneDelegate cannot be a non-static inner class!"
+						+ " Make the class 'static' and use the transferStateFrom() method to pass dependencies.");
+				}
+				this.sceneDelegateInstance = instance;
+			}
+
+		}
 
 		@Override
 		public boolean didFinishLaunching (UIApplication application, UIApplicationLaunchOptions launchOptions) {
@@ -58,6 +75,21 @@ public class IOSApplication implements Application {
 		@Override
 		public void willTerminate (UIApplication application) {
 			app.willTerminate(application);
+		}
+
+		@Override
+		public UISceneConfiguration getConfigurationForConnectingSceneSession (UIApplication application,
+			UISceneSession connectingSceneSession, UISceneConnectionOptions options) {
+			UISceneConfiguration config = new UISceneConfiguration("Default Configuration", connectingSceneSession.getRole());
+			if (this.sceneDelegateInstance != null) {
+				IOSSceneDelegate.userPendingInstance = this.sceneDelegateInstance;
+				config.setDelegateClass(this.sceneDelegateInstance.getClass());
+			} else {
+				// Fallback to default delegate if no custom delegate has been provided
+				IOSSceneDelegate.userPendingInstance = null;
+				config.setDelegateClass(IOSSceneDelegate.class);
+			}
+			return config;
 		}
 	}
 
@@ -210,7 +242,7 @@ public class IOSApplication implements Application {
 		////// Graphics related
 		this.uiWindow = new UIWindow(scene);
 		this.uiWindow.makeKeyAndVisible();
-		((IOSUIWindowSceneDelegate)scene.getDelegate()).setWindow(uiWindow);
+		((IOSSceneDelegate)scene.getDelegate()).setWindow(uiWindow);
 
 		// iOS counts in "points" instead of pixels. Points are logical pixels
 		pixelsPerPoint = (float)uiWindowScene.getScreen().getNativeScale();

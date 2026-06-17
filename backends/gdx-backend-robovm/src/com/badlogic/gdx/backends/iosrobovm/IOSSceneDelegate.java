@@ -1,0 +1,50 @@
+
+package com.badlogic.gdx.backends.iosrobovm;
+
+import com.badlogic.gdx.Gdx;
+import org.robovm.apple.uikit.*;
+
+public class IOSSceneDelegate extends UIWindowSceneDelegateAdapter {
+
+	// Internal registry to bridge the instance to the iOS-created object
+	static IOSSceneDelegate userPendingInstance = null;
+
+	public IOSSceneDelegate () {
+		// When iOS creates this object allow dependency injection by pulling variables from user's pre-made instance
+		if (userPendingInstance != null) {
+			transferStateFrom(userPendingInstance);
+		}
+	}
+
+	/** Allows to copy user variables/dependencies from their custom instance into the instance iOS just created
+	 * @param source User instance */
+	protected void transferStateFrom (IOSSceneDelegate source) {
+		// Users can override this to copy their dependencies
+	}
+
+	@Override
+	public void willConnect (UIScene scene, UISceneSession session, UISceneConnectionOptions connectionOptions) {
+		if (scene instanceof UIWindowScene) {
+			IOSApplication app = (IOSApplication)Gdx.app;
+			app.handleSceneConnection((UIWindowScene)scene);
+		}
+	}
+
+	@Override
+	public void sceneWillResignActive (UIScene scene) {
+		IOSApplication app = (IOSApplication)Gdx.app;
+		app.willResignActive(scene);
+	}
+
+	@Override
+	public void sceneWillEnterForeground (UIScene scene) {
+		IOSApplication app = (IOSApplication)Gdx.app;
+		app.willEnterForeground(scene);
+	}
+
+	@Override
+	public void sceneDidBecomeActive (UIScene scene) {
+		IOSApplication app = (IOSApplication)Gdx.app;
+		app.didBecomeActive(scene);
+	}
+}
