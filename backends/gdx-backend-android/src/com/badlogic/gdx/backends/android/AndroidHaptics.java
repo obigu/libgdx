@@ -88,7 +88,7 @@ public class AndroidHaptics implements Haptics {
 					vibrationEffect = VibrationEffect.EFFECT_HEAVY_CLICK;
 					break;
 				default:
-					throw new IllegalArgumentException("Unknown VibrationType " + impactType);
+					throw new IllegalArgumentException("Unknown ImpactType " + impactType);
 				}
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
 					vibrator.vibrate(VibrationEffect.createPredefined(vibrationEffect), vibrationAttributes);

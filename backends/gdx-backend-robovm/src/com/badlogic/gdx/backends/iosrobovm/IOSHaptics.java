@@ -141,7 +141,7 @@ public class IOSHaptics implements Haptics {
 				uiImpactFeedbackStyle = UIImpactFeedbackStyle.Heavy;
 				break;
 			default:
-				throw new IllegalArgumentException("Unknown VibrationType " + impactType);
+				throw new IllegalArgumentException("Unknown ImpactType " + impactType);
 			}
 			UIImpactFeedbackGenerator uiImpactFeedbackGenerator = new UIImpactFeedbackGenerator(uiImpactFeedbackStyle);
 			uiImpactFeedbackGenerator.impactOccurred();

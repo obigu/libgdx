@@ -81,7 +81,7 @@ public class VibratorTest extends GdxTest {
 				Haptics.ImpactType impactType = Haptics.ImpactType.values()[MathUtils.random(0,
 					Haptics.ImpactType.values().length - 1)];
 				Gdx.input.getHaptics().impact(impactType);
-				Gdx.app.log("VibratorTest", "VibrationType: " + impactType.name());
+				Gdx.app.log("VibratorTest", "ImpactType: " + impactType.name());
 			}
 		});
 
