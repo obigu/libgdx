@@ -144,7 +144,7 @@ configure([
 
 // JReleaser config for release builds to Central Portal
 if (project.hasProperty('RELEASE')) {
-	rootProject.apply plugin: 'org.jreleaser'
+	/*rootProject.apply plugin: 'org.jreleaser'
 
 	rootProject.jreleaser {
 		deploy {
@@ -162,10 +162,10 @@ if (project.hasProperty('RELEASE')) {
 				}
 			}
 		}
-	}
+	}*/
 
 	rootProject.tasks.register('publish') {
 		dependsOn subprojects.collect { it.tasks.withType(PublishToMavenRepository) }
-		finalizedBy rootProject.tasks.named('jreleaserDeploy')
+//		finalizedBy rootProject.tasks.named('jreleaserDeploy')
 	}
 }
