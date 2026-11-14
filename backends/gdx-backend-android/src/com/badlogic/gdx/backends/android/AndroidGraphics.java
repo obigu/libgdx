@@ -688,7 +688,6 @@ public class AndroidGraphics extends AbstractGraphics implements Renderer {
 
 	@TargetApi(Build.VERSION_CODES.P)
 	protected void updateSafeAreaInsets (WindowInsets windowInsets) {
-		insets = AndroidInsets.NONE;
 		if (windowInsets == null) {
 			try {
 				View decorView = app.getApplicationWindow().getDecorView();
@@ -699,19 +698,21 @@ public class AndroidGraphics extends AbstractGraphics implements Renderer {
 			}
 			if (windowInsets == null) return;
 		}
+		AndroidInsets newInsets = AndroidInsets.NONE;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 			// API 30+ unified insets (System bars + Display cutouts)
 			android.graphics.Insets unifiedInsets = windowInsets
 				.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-			insets = new AndroidInsets(unifiedInsets.top, unifiedInsets.left, unifiedInsets.right, unifiedInsets.bottom);
+			newInsets = new AndroidInsets(unifiedInsets.top, unifiedInsets.left, unifiedInsets.right, unifiedInsets.bottom);
 		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 			// API 28–29 fallback for display cutouts
 			android.view.DisplayCutout cutout = windowInsets.getDisplayCutout();
 			if (cutout != null) {
-				insets = new AndroidInsets(cutout.getSafeInsetTop(), cutout.getSafeInsetLeft(), cutout.getSafeInsetRight(),
+				newInsets = new AndroidInsets(cutout.getSafeInsetTop(), cutout.getSafeInsetLeft(), cutout.getSafeInsetRight(),
 					cutout.getSafeInsetBottom());
 			}
 		}
+		insets = newInsets;
 	}
 
 	@Override
